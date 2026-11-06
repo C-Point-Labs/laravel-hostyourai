@@ -1,0 +1,5 @@
+/.notes/
+/.phpunit.cache/
+/vendor/
+composer.lock
+/.phpstan.cache/

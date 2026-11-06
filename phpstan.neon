@@ -1,0 +1,30 @@
+# Strictest setup: level max with bleeding edge, strict rules, deprecation rules,
+# Larastan, ShipMonk rules and full type coverage. No baseline, no ignored errors.
+includes:
+    - vendor/phpstan/phpstan/conf/bleedingEdge.neon
+
+parameters:
+    level: max
+    phpVersion:
+        min: 80200
+        max: 80599
+    paths:
+        - src
+    tmpDir: .phpstan.cache
+    treatPhpDocTypesAsCertain: true
+    reportUnmatchedIgnoredErrors: true
+    checkMissingCallableSignature: true
+    checkUninitializedProperties: true
+    checkBenevolentUnionTypes: true
+    checkImplicitMixed: true
+    rememberPossiblyImpureFunctionValues: false
+    # Typed class constants need PHP 8.3, and this package supports PHP 8.2.
+    type_coverage:
+        return: 100
+        param: 100
+        property: 100
+        constant: 0
+    shipmonkRules:
+        # A stream can only fail while it is being read, and Prism's stream() is a Generator.
+        forbidCheckedExceptionInYieldingMethod:
+            enabled: false

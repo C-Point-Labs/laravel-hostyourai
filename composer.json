@@ -1,0 +1,82 @@
+{
+    "name": "c-point-labs/laravel-hostyourai",
+    "description": "HostYourAI for Laravel: a Prism provider for chat and a typed client for the decision API.",
+    "type": "library",
+    "license": "MIT",
+    "keywords": [
+        "laravel",
+        "prism",
+        "hostyourai",
+        "llm",
+        "eu",
+        "decision"
+    ],
+    "homepage": "https://github.com/C-Point-Labs/laravel-hostyourai",
+    "support": {
+        "issues": "https://github.com/C-Point-Labs/laravel-hostyourai/issues",
+        "source": "https://github.com/C-Point-Labs/laravel-hostyourai"
+    },
+    "authors": [
+        {
+            "name": "Maarten Tolhuijs"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/http": "^12.61.1|^13.12.0",
+        "illuminate/support": "^12.61.1|^13.12.0",
+        "prism-php/prism": "^0.102"
+    },
+    "require-dev": {
+        "larastan/larastan": "^3.0",
+        "laravel/pint": "^1.13",
+        "orchestra/testbench": "^10.0|^11.0",
+        "pestphp/pest": "^3.0|^4.0",
+        "phpstan/extension-installer": "^1.4",
+        "phpstan/phpstan": "^2.1",
+        "phpstan/phpstan-deprecation-rules": "^2.0",
+        "phpstan/phpstan-strict-rules": "^2.0",
+        "shipmonk/phpstan-rules": "^4.0",
+        "tomasvotruba/type-coverage": "^2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "CPointLabs\\HostYourAI\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "CPointLabs\\HostYourAI\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "CPointLabs\\HostYourAI\\HostYourAIServiceProvider"
+            ],
+            "aliases": {
+                "HostYourAI": "CPointLabs\\HostYourAI\\Facades\\HostYourAI"
+            }
+        }
+    },
+    "scripts": {
+        "test": "pest",
+        "lint": "pint --test",
+        "analyse": "phpstan analyse --memory-limit=1G",
+        "check": [
+            "@lint",
+            "@analyse",
+            "@test"
+        ]
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true,
+            "php-http/discovery": true,
+            "phpstan/extension-installer": true
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
