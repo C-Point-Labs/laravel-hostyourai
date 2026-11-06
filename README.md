@@ -1,6 +1,6 @@
 # Laravel HostYourAI
 
-[![CI](https://github.com/C-Point-Labs/laravel-hostyourai/actions/workflows/ci.yml/badge.svg)](https://github.com/C-Point-Labs/laravel-hostyourai/actions/workflows/ci.yml)
+[![CI](https://github.com/C-Point-Labs/laravel-hostyourai/actions/workflows/ci.yml/badge.svg)](https://github.com/C-Point-Labs/laravel-hostyourai/actions/workflows/ci.yml) [![Packagist](https://img.shields.io/packagist/v/c-point-labs/laravel-hostyourai)](https://packagist.org/packages/c-point-labs/laravel-hostyourai)
 
 [HostYourAI](https://hostyourai.com) for Laravel. It gives you:
 
@@ -15,10 +15,7 @@ This is an independent open source package. It is not affiliated with HostYourAI
 
 Requires PHP 8.2+ and Laravel 12.61+ or 13.12+.
 
-The package isn't on Packagist yet, so add the repository first:
-
 ```bash
-composer config repositories.laravel-hostyourai vcs https://github.com/C-Point-Labs/laravel-hostyourai
 composer require c-point-labs/laravel-hostyourai
 ```
 
