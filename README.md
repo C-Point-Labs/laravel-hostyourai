@@ -220,7 +220,7 @@ $ready->first()->contextTokensPerQuestion;
 
 ### Ensembles
 
-Ensembles are not supported yet, because the request format is undocumented.
+Ensembles are not supported yet.
 
 ## Account
 
@@ -319,6 +319,8 @@ A small live smoke test calls the real API with neutral text and low token limit
 ```bash
 HOSTYOURAI_LIVE_TESTS=true HOSTYOURAI_API_KEY=your-key vendor/bin/pest tests/Live
 ```
+
+`HOSTYOURAI_LIVE_TESTS` and `HOSTYOURAI_API_KEY` must be in the actual process environment. Some local PHP setups, like Lerd, don't pass environment variables through to PHP, and the live tests are then skipped.
 
 ## License
 
