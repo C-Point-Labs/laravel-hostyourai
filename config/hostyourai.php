@@ -21,8 +21,10 @@ return [
     'decision_url' => null,
 
     /*
-    | Timeouts in seconds. "timeout" applies to a single request. A stream also
-    | ends with a ConnectionException once "stream_timeout" has passed in total.
+    | Timeouts in seconds. "timeout" applies to a single request. For a stream it
+    | covers the wait for the response to start. A stream then ends with a
+    | ConnectionException once "stream_timeout" has passed in total, also when it
+    | has stalled.
     */
     'timeout' => 30,
     'connect_timeout' => 5,

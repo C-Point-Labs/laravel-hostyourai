@@ -7,6 +7,7 @@ use CPointLabs\HostYourAI\Exceptions\ConfigurationException;
 use CPointLabs\HostYourAI\Exceptions\ConnectionException;
 use CPointLabs\HostYourAI\Exceptions\ModelNotAllowedException;
 use CPointLabs\HostYourAI\Exceptions\ModelUnavailableException;
+use CPointLabs\HostYourAI\Exceptions\RateLimitedException;
 use CPointLabs\HostYourAI\Exceptions\UnexpectedResponseException;
 use Illuminate\Http\Client\ConnectionException as HttpConnectionException;
 use Illuminate\Http\Client\Request;
@@ -206,4 +207,30 @@ it('keeps prompt and key out of exceptions', function (): void {
         expect($e->getMessage().print_r($e->getPrevious(), true))->not->toContain('secret prompt')->not->toContain('test-key')
             ->and($e->responseBody)->toBeNull();
     }
+});
+
+describe('with retries configured', function (): void {
+    beforeEach(function (): void {
+        config()->set('hostyourai.retry', ['times' => 2, 'max_wait' => 5]);
+        Illuminate\Support\Sleep::fake();
+
+        Http::fake(['*/chat/completions' => Http::sequence()
+            ->push(['error' => ['message' => 'Slow down']], 429, ['Retry-After' => '1'])
+            ->push(completion(['content' => 'Hello']))]);
+    });
+
+    it('retries a Prism call', function (): void {
+        $response = Prism::text()->using('hostyourai', 'hyai/auto')->withPrompt('Hi')->asText();
+
+        expect($response->text)->toBe('Hello');
+
+        Http::assertSentCount(2);
+    });
+
+    it('lets a call turn them off', function (): void {
+        expect(fn () => Prism::text()->using('hostyourai', 'hyai/auto')->withPrompt('Hi')->withClientRetry(0)->asText())
+            ->toThrow(RateLimitedException::class);
+
+        Http::assertSentCount(1);
+    });
 });

@@ -40,11 +40,18 @@ use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
 use Prism\Prism\ValueObjects\ToolCall;
 use Prism\Prism\ValueObjects\Usage;
 use Psr\Http\Message\StreamInterface;
+use RuntimeException;
 
 final class Stream
 {
     use CallsTools;
     use ReadsChatCompletions;
+
+    /**
+     * How long one read may block. A read can't be given the time left, because that
+     * shrinks after the request is sent, so a stalled read comes back to check it.
+     */
+    private const READ_TIMEOUT_SECONDS = 1.0;
 
     private StreamState $state;
 
@@ -86,11 +93,24 @@ final class Stream
         $complete = false;
 
         while (! $body->eof()) {
-            if (microtime(true) >= $this->deadline) {
-                throw new ConnectionException('The HostYourAI stream exceeded its time limit.');
+            $this->checkDeadline();
+
+            $line = trim($this->readLine($body));
+
+            if (! str_starts_with($line, 'data:')) {
+                continue;
             }
 
-            $data = $this->nextChunk($body, $complete);
+            $payload = trim(substr($line, 5));
+
+            // Nothing follows this, and a connection left open must not hold up the answer.
+            if ($payload === '[DONE]') {
+                $complete = true;
+
+                break;
+            }
+
+            $data = $this->decodeChunk($payload);
 
             if ($data === null) {
                 continue;
@@ -308,26 +328,10 @@ final class Stream
     }
 
     /**
-     * Reads one SSE line and returns its JSON, or null for anything else.
-     *
      * @return array<string, mixed>|null
      */
-    private function nextChunk(StreamInterface $body, bool &$complete): ?array
+    private function decodeChunk(string $payload): ?array
     {
-        $line = trim($this->readLine($body));
-
-        if (! str_starts_with($line, 'data:')) {
-            return null;
-        }
-
-        $payload = trim(substr($line, 5));
-
-        if ($payload === '[DONE]') {
-            $complete = true;
-
-            return null;
-        }
-
         try {
             $data = json_decode($payload, true, flags: JSON_THROW_ON_ERROR);
         } catch (JsonException $e) {
@@ -342,12 +346,9 @@ final class Stream
         $buffer = '';
 
         while (! $body->eof()) {
-            $byte = $body->read(1);
+            $this->checkDeadline();
 
-            if ($byte === '') {
-                return $buffer;
-            }
-
+            $byte = $this->readByte($body);
             $buffer .= $byte;
 
             if ($byte === "\n") {
@@ -358,10 +359,34 @@ final class Stream
         return $buffer;
     }
 
+    /**
+     * An empty string means nothing arrived in time. What was read so far stays valid.
+     */
+    private function readByte(StreamInterface $body): string
+    {
+        try {
+            return $body->read(1);
+        } catch (RuntimeException $e) {
+            if ($body->getMetadata('timed_out') === true) {
+                return '';
+            }
+
+            // Safe to chain, unlike the HTTP client's exceptions: it holds no request.
+            throw new ConnectionException('The HostYourAI stream was interrupted.', previous: $e);
+        }
+    }
+
+    private function checkDeadline(): void
+    {
+        if (microtime(true) >= $this->deadline) {
+            throw new ConnectionException('The HostYourAI stream exceeded its time limit.');
+        }
+    }
+
     private function send(Request $request): Response
     {
         return $this->client
-            ->withOptions(['stream' => true])
+            ->withOptions(['stream' => true, 'read_timeout' => self::READ_TIMEOUT_SECONDS])
             ->post('chat/completions', Payload::stringKeys([
                 'stream' => true,
                 'stream_options' => ['include_usage' => true],

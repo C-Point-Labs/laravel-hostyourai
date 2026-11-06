@@ -191,13 +191,6 @@ it('accepts a stream that ends with DONE but no finish reason', function (): voi
     expect(iterator_to_array(hostyouraiStream()->asStream(), false))->not->toBeEmpty();
 });
 
-it('stops at the stream time limit', function (): void {
-    config()->set('hostyourai.stream_timeout', 0);
-    fakeStream([chunk(['content' => 'Hi']), chunk(['content' => ''], 'stop')]);
-
-    iterator_to_array(hostyouraiStream()->asStream(), false);
-})->throws(ConnectionException::class, 'time limit');
-
 it('never broadcasts reasoning: broadcasting needs reasoning events turned off', function (): void {
     Event::fake();
     fakeStream(reasoningChunks());

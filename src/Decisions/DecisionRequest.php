@@ -25,7 +25,7 @@ final readonly class DecisionRequest
     ) {}
 
     /**
-     * Keeps the visitor's text out of dumps and error pages.
+     * Keeps the state out of print_r and var_dump output.
      *
      * @return array<string, mixed>
      */

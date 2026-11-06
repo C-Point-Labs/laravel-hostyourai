@@ -74,7 +74,8 @@ class HostYourAIProvider extends Provider
     {
         $client = $this->clients->chat()->withOptions($options);
 
-        if ($retry !== []) {
+        // Prism's default is [0]: no opinion, so the configured retries stay in place.
+        if ($retry !== [] && $retry !== [0]) {
             call_user_func_array($client->retry(...), $retry);
         }
 

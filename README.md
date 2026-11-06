@@ -84,7 +84,7 @@ php artisan vendor:publish --tag=hostyourai-config
 | `decision_url` | derived from `base_url` | URL for the decision API |
 | `timeout` | `30` | Seconds per request |
 | `connect_timeout` | `5` | Seconds to connect |
-| `stream_timeout` | `120` | Total seconds a stream may run |
+| `stream_timeout` | `120` | Total seconds a stream may run, also when it stalls |
 | `retry.times` | `0` | Automatic retries on 429 and 503 |
 | `retry.max_wait` | `5` | Longest `Retry-After`, in seconds, that is still retried |
 | `decision_model` | `hyai/loes-beslis` | Model used when you don't call `->model()` |
