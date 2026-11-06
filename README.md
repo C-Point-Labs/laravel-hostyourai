@@ -1,13 +1,57 @@
-# Laravel HostYourAI
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/C-Point-Labs/laravel-hostyourai/main/art/banner-dark.svg">
+    <img alt="Laravel HostYourAI: Prism provider, typed decisions, EU-hosted open models" src="https://raw.githubusercontent.com/C-Point-Labs/laravel-hostyourai/main/art/banner-light.svg" width="100%">
+  </picture>
+</p>
 
-[![CI](https://github.com/C-Point-Labs/laravel-hostyourai/actions/workflows/ci.yml/badge.svg)](https://github.com/C-Point-Labs/laravel-hostyourai/actions/workflows/ci.yml) [![Packagist](https://img.shields.io/packagist/v/c-point-labs/laravel-hostyourai)](https://packagist.org/packages/c-point-labs/laravel-hostyourai)
+<p align="center">
+  <a href="https://github.com/C-Point-Labs/laravel-hostyourai/actions/workflows/ci.yml"><img alt="Tests" src="https://img.shields.io/github/actions/workflow/status/C-Point-Labs/laravel-hostyourai/ci.yml?branch=main&label=tests&style=flat-square&labelColor=1f2a2e&color=2f3f44"></a>
+  <a href="https://packagist.org/packages/c-point-labs/laravel-hostyourai"><img alt="Latest version" src="https://img.shields.io/packagist/v/c-point-labs/laravel-hostyourai?label=packagist&style=flat-square&labelColor=1f2a2e&color=2f3f44"></a>
+  <a href="https://packagist.org/packages/c-point-labs/laravel-hostyourai"><img alt="PHP version" src="https://img.shields.io/packagist/dependency-v/c-point-labs/laravel-hostyourai/php?label=php&style=flat-square&labelColor=1f2a2e&color=2f3f44"></a>
+  <img alt="PHPStan level max" src="https://img.shields.io/badge/phpstan-level%20max-2f3f44?style=flat-square&labelColor=1f2a2e">
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-2f3f44?style=flat-square&labelColor=1f2a2e"></a>
+</p>
 
-[HostYourAI](https://hostyourai.com) for Laravel. It gives you:
+<p align="center">
+  <a href="#install">Install</a> &nbsp;·&nbsp;
+  <a href="#chat">Chat</a> &nbsp;·&nbsp;
+  <a href="#decisions">Decisions</a> &nbsp;·&nbsp;
+  <a href="#errors">Errors</a> &nbsp;·&nbsp;
+  <a href="#testing-your-app">Testing</a>
+</p>
 
-- a [Prism](https://prismphp.com) provider for chat: text, streaming, tool calling and structured output;
-- a typed client for the decision API, with readonly DTOs for Choice, Noul and Score questions;
-- typed exceptions for API errors, with `Retry-After` support;
-- a test fake.
+Use [HostYourAI](https://hostyourai.com) from Laravel: chat through [Prism](https://prismphp.com), and typed judgments your code can act on.
+
+```php
+use CPointLabs\HostYourAI\Decisions\Questions\Noul;
+use CPointLabs\HostYourAI\Facades\HostYourAI;
+use Prism\Prism\Facades\Prism;
+
+// Generate text, stream it, call tools or get structured output.
+$reply = Prism::text()
+    ->using('hostyourai', 'hyai/auto')
+    ->withPrompt('Write a short reply to this customer.')
+    ->asText();
+
+// Or ask a question and get a number back instead of text.
+$decision = HostYourAI::decision()
+    ->state('I was charged twice for the same invoice.')
+    ->ask('refund', Noul::make('Is a refund requested?'))
+    ->send();
+
+if ($decision->noul('refund')->isYes(0.8)) {
+    // Route it to billing.
+}
+```
+
+| | |
+| --- | --- |
+| **Chat** | A Prism provider with text, streaming, tool calling and structured output |
+| **Decisions** | A fluent client with readonly DTOs for Choice, Noul and Score questions |
+| **Errors** | Typed exceptions for every API error, with `Retry-After` support |
+| **Privacy** | No logging, and reasoning text stays away from your users by default |
+| **Testing** | A fake for decisions, next to Prism's own |
 
 This is an independent open source package. It is not affiliated with HostYourAI B.V.
 
