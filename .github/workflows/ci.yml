@@ -10,12 +10,13 @@ permissions:
 
 jobs:
   checks:
-    name: PHP ${{ matrix.php }}, Laravel ${{ matrix.laravel }}
+    name: PHP ${{ matrix.php }}, Laravel ${{ matrix.laravel }} ${{ matrix.lowest }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         include:
+          - { php: '8.2', laravel: '^12.61.1', testbench: '^10.0', lowest: '--prefer-lowest' }
           - { php: '8.2', laravel: '^12.61.1', testbench: '^10.0' }
           - { php: '8.3', laravel: '^12.61.1', testbench: '^10.0' }
           - { php: '8.4', laravel: '^12.61.1', testbench: '^10.0' }
@@ -35,12 +36,14 @@ jobs:
         run: composer validate --strict --no-check-lock
 
       - name: Install dependencies
-        run: composer update --prefer-dist --no-interaction --no-progress -W --with "laravel/framework:${{ matrix.laravel }}" --with "orchestra/testbench:${{ matrix.testbench }}"
+        run: composer update ${{ matrix.lowest }} --prefer-dist --no-interaction --no-progress -W --with "laravel/framework:${{ matrix.laravel }}" --with "orchestra/testbench:${{ matrix.testbench }}"
 
       - name: Pint
+        if: ${{ !matrix.lowest }}
         run: vendor/bin/pint --test
 
       - name: PHPStan
+        if: ${{ !matrix.lowest }}
         run: vendor/bin/phpstan analyse --memory-limit=1G --no-progress
 
       - name: Pest

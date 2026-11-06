@@ -62,6 +62,9 @@ class HostYourAIFake extends HostYourAI
     {
         $this->recorded[] = $request;
 
+        // What the real client would send, so a request it can't send fails here too.
+        json_encode($request->toArray(), JSON_THROW_ON_ERROR);
+
         $answers = $this->decisions instanceof Closure ? ($this->decisions)($request) : $this->decisions;
 
         if ($answers instanceof Throwable) {
@@ -132,8 +135,8 @@ class HostYourAIFake extends HostYourAI
 
         return match (true) {
             $question instanceof Noul && is_numeric($answer) => new NoulAnswer((float) $answer),
-            $question instanceof Score && is_numeric($answer) => new ScoreAnswer((float) $answer, 1.0, $question->levels, []),
-            $question instanceof Choice && is_string($answer) => new ChoiceAnswer($answer, 1.0, [$answer => 1.0]),
+            $question instanceof Score && is_numeric($answer) && (float) $answer >= 0.0 && (float) $answer <= (float) (count($question->levels) - 1) => new ScoreAnswer((float) $answer, 1.0, $question->levels, []),
+            $question instanceof Choice && is_string($answer) && array_key_exists($answer, $question->criteria) => new ChoiceAnswer($answer, 1.0, [$answer => 1.0]),
             default => throw new LogicException('The fake answer does not fit the question type.'),
         };
     }

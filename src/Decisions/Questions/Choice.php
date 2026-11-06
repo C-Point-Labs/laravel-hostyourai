@@ -66,8 +66,9 @@ final readonly class Choice implements Question
         $named = [];
 
         foreach ($criteria as $name) {
-            if (! is_string($name)) {
-                throw new InvalidArgumentException('A list of criteria must only hold names.');
+            // PHP would turn a name like "0" into a list index, and JSON would lose it.
+            if (! is_string($name) || is_numeric($name)) {
+                throw new InvalidArgumentException('A list of criteria must only hold names that are not numbers.');
             }
 
             $named[$name] = null;

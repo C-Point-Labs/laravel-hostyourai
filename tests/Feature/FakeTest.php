@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Http;
 it('answers from shorthands without touching the network', function (): void {
     Http::fake();
 
-    $fake = HostYourAI::fake(['n' => 0.9, 'c' => 'billing', 's' => 1.5]);
+    $fake = HostYourAI::fake(['n' => 0.9, 'c' => 'billing', 's' => 0.5]);
 
     $result = HostYourAI::decision()
         ->state('Text')
@@ -27,7 +27,7 @@ it('answers from shorthands without touching the network', function (): void {
 
     expect($result->noul('n')->probability)->toBe(0.9)
         ->and($result->choice('c')->choice)->toBe('billing')
-        ->and($result->score('s')->score)->toBe(1.5);
+        ->and($result->score('s')->score)->toBe(0.5);
 
     $fake->assertDecisionCount(1);
     $fake->assertDecided(fn (DecisionRequest $request): bool => $request->state === 'Text');
@@ -75,3 +75,19 @@ it('is also what the container hands out', function (): void {
 
     expect(app(Client::class))->toBe($fake);
 });
+
+it('refuses an answer the API could not give', function (array $answers, CPointLabs\HostYourAI\Decisions\Questions\Question $question): void {
+    HostYourAI::fake($answers);
+
+    HostYourAI::decision()->state('Text')->ask('q', $question)->send();
+})->with([
+    'unknown choice' => [['q' => 'other'], Choice::make('Which?', ['a', 'b'])],
+    'score above the levels' => [['q' => 2], Score::make('How much?', ['Low', 'High'])],
+    'score below the levels' => [['q' => -1], Score::make('How much?', ['Low', 'High'])],
+])->throws(LogicException::class);
+
+it('fails on a request the client could not send', function (): void {
+    HostYourAI::fake(['q' => 0.5]);
+
+    HostYourAI::decision()->state("\xB1")->ask('q', Noul::make('Yes?'))->send();
+})->throws(JsonException::class);

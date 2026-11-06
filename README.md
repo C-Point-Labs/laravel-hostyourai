@@ -82,8 +82,8 @@ php artisan vendor:publish --tag=hostyourai-config
 | `api_key` | `HOSTYOURAI_API_KEY` | Your API key |
 | `base_url` | `HOSTYOURAI_BASE_URL` | URL for chat, models and balance |
 | `decision_url` | derived from `base_url` | URL for the decision API |
-| `timeout` | `30` | Seconds per request |
-| `connect_timeout` | `5` | Seconds to connect |
+| `timeout` | `30` | Seconds per request. For a stream, the wait for the response to start |
+| `connect_timeout` | `5` | Seconds to connect. PHP's stream transport ignores this for streams, where `timeout` applies |
 | `stream_timeout` | `120` | Total seconds a stream may run, also when it stalls |
 | `retry.times` | `0` | Automatic retries on 429 and 503 |
 | `retry.max_wait` | `5` | Longest `Retry-After`, in seconds, that is still retried |
@@ -142,20 +142,20 @@ A stream that ends early or runs past `stream_timeout` throws a `ConnectionExcep
 
 ### Reasoning
 
-Some models reason before they answer. That text is kept away from your users by default:
+Some models reason before they answer. That text is left out unless you ask for it:
 
 - `$response->text` and text deltas hold the answer only. Leading blank lines are removed.
-- Text and structured responses leave reasoning out completely.
-- Streams emit it as a `ThinkingEvent`, which you only see if you read `$event->delta` yourself.
-- `toArray()` on those events leaves the text out, so `asEventStreamResponse()` and `asDataStreamResponse()` send no reasoning text to the browser.
-- `asBroadcast()` throws on those events. To broadcast, turn them off, which works for any stream:
+- Text and structured responses never include reasoning.
+- Streams, including `asEventStreamResponse()`, `asDataStreamResponse()` and `asBroadcast()`, leave it out by default.
+
+To receive it in a stream as Prism's `ThinkingEvent`, turn it on. Prism's stream responses then send it to the browser too:
 
 ```php
 Prism::text()
     ->using('hostyourai', 'hyai/auto')
-    ->withProviderOptions(['reasoning' => false])
+    ->withProviderOptions(['reasoning' => true])
     ->withPrompt('Hello')
-    ->asBroadcast($channel);
+    ->asStream();
 ```
 
 Reasoning can use up your `max_tokens`. You then get empty text and `FinishReason::Length`, so allow for this when you set a low limit.
@@ -299,6 +299,8 @@ Every API error is a typed exception that extends `HostYourAIException`, which e
 | `ConfigurationException` | No API key configured |
 | `UnexpectedResponseException` | A response the package can't read |
 | `StructuredOutputException` | Invalid or incomplete structured output |
+
+They all extend Prism's `PrismException`, but not its more specific types: catch `RateLimitedException` here, not `PrismRateLimitedException`.
 
 Each one has `status`, `errorType`, `errorCode`, `requestId`, `retryAfter` and `retryAt()`. `retryAfter` is null when the API sends no `Retry-After`.
 

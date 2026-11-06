@@ -43,3 +43,7 @@ it('builds a score question with ordered levels', function (): void {
 it('rejects a score outside 1 to 10 levels', function (array $levels): void {
     Score::make('How urgent?', $levels);
 })->with([[[]], [array_fill(0, 11, 'level')]])->throws(InvalidArgumentException::class);
+
+it('rejects numeric names in a list of criteria', function (): void {
+    Choice::make('Which?', ['0', '1']);
+})->throws(InvalidArgumentException::class, 'not numbers');

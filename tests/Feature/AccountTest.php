@@ -77,3 +77,13 @@ it('lists decision models', function (): void {
         ->and($models[1]->state)->toBe('cold')
         ->and($models[1]->maxQuestions)->toBeNull();
 });
+
+it('refuses a balance it cannot trust', function (array $body): void {
+    Http::fake(['*/balance' => Http::response($body)]);
+
+    expect(fn () => HostYourAI::balance())->toThrow(CPointLabs\HostYourAI\Exceptions\UnexpectedResponseException::class);
+})->with([
+    'no balance' => [['currency' => 'EUR', 'spend_month' => 0, 'auto_topup' => true]],
+    'empty' => [['unknown' => true]],
+    'bad date' => [['currency' => 'EUR', 'balance' => 1, 'spend_month' => 0, 'auto_topup' => true, 'as_of' => 'not a date']],
+]);

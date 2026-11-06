@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CPointLabs\HostYourAI\Prism\Maps;
 
+use CPointLabs\HostYourAI\Exceptions\InvalidRequestException;
 use InvalidArgumentException;
 use Prism\Prism\Contracts\Message;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
@@ -15,6 +16,8 @@ use stdClass;
 
 /**
  * Maps Prism messages to the OpenAI chat format.
+ *
+ * @internal
  */
 final class MessageMap
 {
@@ -53,6 +56,10 @@ final class MessageMap
      */
     private static function userContent(UserMessage $message): string|array
     {
+        if ($message->documents() !== [] || $message->audios() !== [] || $message->videos() !== []) {
+            throw new InvalidRequestException('This provider only accepts text and images, not documents, audio or video.');
+        }
+
         if ($message->images() === []) {
             return $message->text();
         }

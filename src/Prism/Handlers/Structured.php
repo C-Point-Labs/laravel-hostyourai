@@ -20,6 +20,9 @@ use Prism\Prism\Structured\Step;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\SystemMessage;
 
+/**
+ * @internal
+ */
 final class Structured
 {
     use ReadsChatCompletions;

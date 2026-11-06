@@ -7,6 +7,9 @@ namespace CPointLabs\HostYourAI\Prism\Maps;
 use Prism\Prism\Tool;
 use stdClass;
 
+/**
+ * @internal
+ */
 final class ToolMap
 {
     /**

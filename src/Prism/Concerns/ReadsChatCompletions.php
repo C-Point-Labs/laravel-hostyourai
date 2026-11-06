@@ -16,7 +16,9 @@ use Prism\Prism\ValueObjects\Usage;
 
 /**
  * Reads the parts every chat completion shares. Reasoning is left out on
- * purpose: only the streaming handler exposes it, as a private event.
+ * purpose: only the streaming handler exposes it, and only when asked to.
+ *
+ * @internal
  */
 trait ReadsChatCompletions
 {

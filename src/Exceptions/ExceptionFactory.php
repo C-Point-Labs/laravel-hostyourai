@@ -13,9 +13,22 @@ use Throwable;
 /**
  * Turns API errors into typed exceptions. The API identifies an error by its
  * HTTP status, and by "code" or "type" in the body, so all of them are read.
+ *
+ * @internal
  */
 final class ExceptionFactory
 {
+    /**
+     * The status a code stands for, in a stream that already answered 200.
+     */
+    private const STATUS_BY_CODE = [
+        'team_budget_exceeded' => 402,
+        'model_not_allowed' => 403,
+        'personal_key_required' => 403,
+        'model_unavailable' => 503,
+        'sovereignty_unavailable' => 503,
+    ];
+
     public static function fromRequestException(RequestException $e): HostYourAIException
     {
         // Not chained: the response's transfer stats hold the request, with its headers and body.
@@ -68,7 +81,11 @@ final class ExceptionFactory
     {
         $status = $error['status'] ?? $error['code'] ?? null;
 
-        return self::make(is_numeric($status) ? (int) $status : 500, $error);
+        if (is_numeric($status)) {
+            return self::make((int) $status, $error);
+        }
+
+        return self::make(is_string($status) ? self::STATUS_BY_CODE[$status] ?? 500 : 500, $error);
     }
 
     public static function fromConnectionError(HttpConnectionException $e): ConnectionException

@@ -16,6 +16,8 @@ use Throwable;
 /**
  * Builds the authenticated HTTP client shared by chat, decisions and account
  * calls. It adds no logging, so prompts and keys stay out of your logs.
+ *
+ * @internal
  */
 final class ClientFactory
 {

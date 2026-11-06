@@ -70,32 +70,32 @@ it('streams text deltas with usage', function (): void {
         && $request['max_tokens'] === 50);
 });
 
-it('emits reasoning as thinking events, apart from the text', function (): void {
+it('leaves out reasoning by default', function (): void {
     fakeStream(reasoningChunks());
 
     $events = collect(iterator_to_array(hostyouraiStream()->asStream(), false));
 
+    expect($events->whereInstanceOf(ThinkingStartEvent::class))->toBeEmpty()
+        ->and($events->whereInstanceOf(ThinkingEvent::class))->toBeEmpty()
+        ->and($events->whereInstanceOf(TextDeltaEvent::class)->map->delta->implode(''))->toBe('Hello')
+        ->and($events->last()->usage->thoughtTokens)->toBe(2);
+});
+
+it('emits reasoning as thinking events when asked to', function (): void {
+    fakeStream(reasoningChunks());
+
+    $events = collect(iterator_to_array(hostyouraiStream()->withProviderOptions(['reasoning' => true])->asStream(), false));
+
     expect($events->whereInstanceOf(ThinkingStartEvent::class))->toHaveCount(1)
         ->and($events->whereInstanceOf(ThinkingCompleteEvent::class))->toHaveCount(1)
         ->and($events->whereInstanceOf(ThinkingEvent::class)->map->delta->implode(''))->toBe('private reasoning')
-        ->and($events->whereInstanceOf(TextDeltaEvent::class)->map->delta->implode(''))->toBe('Hello')
-        ->and($events->last()->usage->thoughtTokens)->toBe(2);
+        ->and($events->whereInstanceOf(TextDeltaEvent::class)->map->delta->implode(''))->toBe('Hello');
 });
 
 it('gives only the answer through VisibleText', function (): void {
     fakeStream(reasoningChunks());
 
     expect(implode('', iterator_to_array(VisibleText::from(hostyouraiStream()->asStream()), false)))->toBe('Hello');
-});
-
-it('never serializes reasoning from an event', function (): void {
-    fakeStream(reasoningChunks());
-
-    $serialized = collect(iterator_to_array(hostyouraiStream()->asStream(), false))
-        ->map(fn ($event): array => $event->toArray())
-        ->toJson();
-
-    expect($serialized)->not->toContain('private')->not->toContain('reasoning"');
 });
 
 it('sends no reasoning through Prism\'s stream responses', function (string $method): void {
@@ -118,19 +118,6 @@ it('sends no reasoning through Prism\'s stream responses', function (string $met
         ->and($output)->not->toContain('private')
         ->and($output)->not->toContain('reasoning"');
 })->with(['asEventStreamResponse', 'asDataStreamResponse']);
-
-it('can leave out reasoning events altogether', function (): void {
-    fakeStream(reasoningChunks());
-
-    $events = collect(iterator_to_array(
-        hostyouraiStream()->withProviderOptions(['reasoning' => false])->asStream(),
-        false,
-    ));
-
-    expect($events->whereInstanceOf(ThinkingStartEvent::class))->toBeEmpty()
-        ->and($events->whereInstanceOf(ThinkingEvent::class))->toBeEmpty()
-        ->and($events->whereInstanceOf(TextDeltaEvent::class)->map->delta->implode(''))->toBe('Hello');
-});
 
 it('runs tools while streaming', function (): void {
     Http::fake([STREAM_URL => Http::sequence()
@@ -191,18 +178,11 @@ it('accepts a stream that ends with DONE but no finish reason', function (): voi
     expect(iterator_to_array(hostyouraiStream()->asStream(), false))->not->toBeEmpty();
 });
 
-it('never broadcasts reasoning: broadcasting needs reasoning events turned off', function (): void {
+it('broadcasts the answer without reasoning', function (): void {
     Event::fake();
     fakeStream(reasoningChunks());
 
-    expect(fn () => hostyouraiStream()->asBroadcast(new Channel('answers')))
-        ->toThrow(InvalidArgumentException::class);
-
-    Event::assertNotDispatched(ThinkingBroadcast::class);
-
-    fakeStream(reasoningChunks());
-
-    hostyouraiStream()->withProviderOptions(['reasoning' => false])->asBroadcast(new Channel('answers'));
+    hostyouraiStream()->asBroadcast(new Channel('answers'));
 
     Event::assertDispatched(TextDeltaBroadcast::class);
     Event::assertNotDispatched(ThinkingBroadcast::class);

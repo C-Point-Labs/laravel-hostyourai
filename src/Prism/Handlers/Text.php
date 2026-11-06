@@ -20,6 +20,9 @@ use Prism\Prism\Text\Step;
 use Prism\Prism\ValueObjects\Messages\AssistantMessage;
 use Prism\Prism\ValueObjects\Messages\ToolResultMessage;
 
+/**
+ * @internal
+ */
 final class Text
 {
     use CallsTools;

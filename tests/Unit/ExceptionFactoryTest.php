@@ -72,3 +72,15 @@ it('gives the moment to retry at', function (): void {
 
     CarbonImmutable::setTestNow();
 });
+
+it('maps an error inside a 200 response by its code', function (array $error, string $class): void {
+    expect(ExceptionFactory::fromErrorPayload($error))->toBeInstanceOf($class);
+})->with([
+    'budget' => [['code' => 'team_budget_exceeded'], BudgetExceededException::class],
+    'model not allowed' => [['code' => 'model_not_allowed'], ModelNotAllowedException::class],
+    'personal key' => [['code' => 'personal_key_required'], PersonalKeyRequiredException::class],
+    'unavailable' => [['code' => 'model_unavailable'], ModelUnavailableException::class],
+    'numeric status' => [['status' => 429], RateLimitedException::class],
+    'numeric code' => [['code' => 429], RateLimitedException::class],
+    'unknown code' => [['code' => 'something_else'], ServerException::class],
+]);

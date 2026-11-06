@@ -11,7 +11,6 @@ use CPointLabs\HostYourAI\Prism\Concerns\ReadsChatCompletions;
 use CPointLabs\HostYourAI\Prism\Maps\MessageMap;
 use CPointLabs\HostYourAI\Prism\Maps\ToolChoiceMap;
 use CPointLabs\HostYourAI\Prism\Maps\ToolMap;
-use CPointLabs\HostYourAI\Prism\Streaming\PrivateThinkingEvent;
 use CPointLabs\HostYourAI\Support\Payload;
 use Generator;
 use Illuminate\Http\Client\PendingRequest;
@@ -31,6 +30,7 @@ use Prism\Prism\Streaming\Events\TextCompleteEvent;
 use Prism\Prism\Streaming\Events\TextDeltaEvent;
 use Prism\Prism\Streaming\Events\TextStartEvent;
 use Prism\Prism\Streaming\Events\ThinkingCompleteEvent;
+use Prism\Prism\Streaming\Events\ThinkingEvent;
 use Prism\Prism\Streaming\Events\ThinkingStartEvent;
 use Prism\Prism\Streaming\Events\ToolCallEvent;
 use Prism\Prism\Streaming\StreamState;
@@ -42,6 +42,9 @@ use Prism\Prism\ValueObjects\Usage;
 use Psr\Http\Message\StreamInterface;
 use RuntimeException;
 
+/**
+ * @internal
+ */
 final class Stream
 {
     use CallsTools;
@@ -85,7 +88,7 @@ final class Stream
 
         $this->state->withMessageId(EventID::generate('msg'));
 
-        $emitReasoning = $request->providerOptions('reasoning') !== false;
+        $emitReasoning = $request->providerOptions('reasoning') === true;
         $text = '';
         $toolCalls = [];
         $rawUsage = null;
@@ -225,7 +228,7 @@ final class Stream
             yield new ThinkingStartEvent(EventID::generate(), time(), $this->state->reasoningId());
         }
 
-        yield new PrivateThinkingEvent(EventID::generate(), time(), $reasoning, $this->state->reasoningId());
+        yield new ThinkingEvent(EventID::generate(), time(), $reasoning, $this->state->reasoningId());
     }
 
     /**

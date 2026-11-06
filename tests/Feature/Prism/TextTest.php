@@ -5,6 +5,7 @@ declare(strict_types=1);
 use CPointLabs\HostYourAI\Exceptions\BudgetExceededException;
 use CPointLabs\HostYourAI\Exceptions\ConfigurationException;
 use CPointLabs\HostYourAI\Exceptions\ConnectionException;
+use CPointLabs\HostYourAI\Exceptions\InvalidRequestException;
 use CPointLabs\HostYourAI\Exceptions\ModelNotAllowedException;
 use CPointLabs\HostYourAI\Exceptions\ModelUnavailableException;
 use CPointLabs\HostYourAI\Exceptions\RateLimitedException;
@@ -16,6 +17,7 @@ use Prism\Prism\Enums\FinishReason;
 use Prism\Prism\Enums\ToolChoice;
 use Prism\Prism\Facades\Prism;
 use Prism\Prism\Facades\Tool;
+use Prism\Prism\ValueObjects\Media\Document;
 use Prism\Prism\ValueObjects\Media\Image;
 use Prism\Prism\ValueObjects\Messages\UserMessage;
 
@@ -233,4 +235,17 @@ describe('with retries configured', function (): void {
 
         Http::assertSentCount(1);
     });
+});
+
+it('refuses a document instead of dropping it', function (): void {
+    Http::fake();
+
+    $message = new UserMessage('Summarise this', [
+        Document::fromRawContent('Text', 'text/plain'),
+    ]);
+
+    expect(fn () => Prism::text()->using('hostyourai', 'hyai/auto')->withMessages([$message])->asText())
+        ->toThrow(InvalidRequestException::class, 'documents');
+
+    Http::assertNothingSent();
 });

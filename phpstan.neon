@@ -1,5 +1,6 @@
 # Strictest setup: level max with bleeding edge, strict rules, deprecation rules,
-# Larastan, ShipMonk rules and full type coverage. No baseline, no ignored errors.
+# Larastan, ShipMonk rules and full type coverage. No baseline. The only ignored errors
+# are below, and they name the files.
 includes:
     - vendor/phpstan/phpstan/conf/bleedingEdge.neon
 
@@ -24,7 +25,11 @@ parameters:
         param: 100
         property: 100
         constant: 0
-    shipmonkRules:
+    ignoreErrors:
         # A stream can only fail while it is being read, and Prism's stream() is a Generator.
-        forbidCheckedExceptionInYieldingMethod:
-            enabled: false
+        -
+            identifier: shipmonk.checkedExceptionInYieldingMethod
+            path: src/Prism/Handlers/Stream.php
+        -
+            identifier: shipmonk.checkedExceptionInYieldingMethod
+            path: src/Prism/HostYourAIProvider.php

@@ -120,6 +120,9 @@ final class Payload
     }
 
     /**
+     * Narrows the keys for static analysis. It changes nothing at runtime: PHP keeps
+     * a numeric key as an int, so don't rely on these keys being strings.
+     *
      * @param array<array-key, mixed> $data
      * @return array<string, mixed>
      */

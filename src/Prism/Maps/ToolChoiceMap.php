@@ -6,6 +6,9 @@ namespace CPointLabs\HostYourAI\Prism\Maps;
 
 use Prism\Prism\Enums\ToolChoice;
 
+/**
+ * @internal
+ */
 final class ToolChoiceMap
 {
     /**
