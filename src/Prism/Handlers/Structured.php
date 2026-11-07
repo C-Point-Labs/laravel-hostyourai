@@ -8,6 +8,7 @@ use CPointLabs\HostYourAI\Exceptions\StructuredOutputException;
 use CPointLabs\HostYourAI\Prism\Concerns\ReadsChatCompletions;
 use CPointLabs\HostYourAI\Prism\Maps\MessageMap;
 use CPointLabs\HostYourAI\Support\Payload;
+use CPointLabs\HostYourAI\Support\ProviderOptions;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Arr;
@@ -75,6 +76,7 @@ final class Structured
         return $this->client->post('chat/completions', Payload::stringKeys([
             'model' => $request->model(),
             'messages' => MessageMap::map($request->messages(), [...$request->systemPrompts(), $instruction]),
+            ...ProviderOptions::body($request->providerOptions()),
             'response_format' => [
                 'type' => 'json_schema',
                 'json_schema' => [

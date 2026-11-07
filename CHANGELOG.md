@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-11-07
+
+### Added
+
+- `hyai.task` and `hyai.policy` provider options for text, structured output and streams, validated and sent as the `hyai` body object.
+
 ### Changed
 
 - The release workflow takes its notes from this changelog, and fails when a tag has no entry.
@@ -78,7 +84,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Typed exceptions with `Retry-After` support.
 - A test fake for decisions, balance and models.
 
-[Unreleased]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.3.0...v0.3.1
 [0.3.0]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.1.1...v0.2.0

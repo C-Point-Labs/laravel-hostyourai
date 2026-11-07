@@ -209,3 +209,20 @@ it('identifies the package on a stream', function (): void {
 
     Http::assertSent(fn (Request $request): bool => str_starts_with($request->header('User-Agent')[0] ?? '', 'c-point-labs/laravel-hostyourai/'));
 });
+
+it('sends the hyai options in the body', function (): void {
+    fakeStream([chunk(['content' => 'Hi'], 'stop')]);
+
+    iterator_to_array(hostyouraiStream()->withProviderOptions(['hyai' => ['task' => 'chat', 'policy' => 'speed'], 'reasoning' => true])->asStream(), false);
+
+    Http::assertSent(fn (Request $request): bool => $request['hyai'] === ['task' => 'chat', 'policy' => 'speed']);
+});
+
+it('refuses a hyai value that the API does not list', function (): void {
+    Http::fake();
+
+    expect(fn () => iterator_to_array(hostyouraiStream()->withProviderOptions(['hyai' => ['policy' => 'fast']])->asStream(), false))
+        ->toThrow(InvalidRequestException::class, '"hyai.policy"');
+
+    Http::assertNothingSent();
+});

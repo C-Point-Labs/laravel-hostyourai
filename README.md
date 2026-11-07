@@ -162,7 +162,20 @@ Reasoning can use up your `max_tokens`. You then get empty text and `FinishReaso
 
 ### Provider options
 
-`withProviderOptions()` takes `reasoning` for streams and `schema.strict` for structured output. HostYourAI documents no other chat request fields, so anything else raises an `InvalidRequestException` that names the option, instead of being ignored.
+`hyai.task` and `hyai.policy` tell HostYourAI's router about a request, on text, structured output and streams:
+
+```php
+Prism::text()
+    ->using('hostyourai', 'hyai/auto')
+    ->withProviderOptions(['hyai' => ['task' => 'summarize', 'policy' => 'cost']])
+    ->withPrompt('Summarize this ticket.')
+    ->asText();
+```
+
+- `task`: `chat`, `code`, `summarize`, `classify`, `extract`, `rag`, `legal` or `reason`.
+- `policy`: `balanced`, `speed`, `cost`, `quality` or `sovereign`.
+
+Streams also take `reasoning`, and structured output takes `schema.strict`. Any other option or value raises an `InvalidRequestException` that names the option, instead of being ignored.
 
 ### Tool calling
 
@@ -334,6 +347,7 @@ This package doesn't decide where a request runs. HostYourAI does, based on your
 
 - **Turning it on:** EU only, also called Sovereignty Mode, is a [switch per API key](https://hostyourai.com/faq) in your HostYourAI account. For a team, set the `eu_only` guard on its router through the [Management API](https://hostyourai.com/docs/management-api). The [security page](https://hostyourai.com/security#3-where-your-data-is-processed) also describes conditions for activating it per account, so check with HostYourAI if you depend on it.
 - **EU-hosted and sovereign:** EU-hosted says where the machine is. HostYourAI's [security page](https://hostyourai.com/security#3-where-your-data-is-processed) names US-incorporated GPU marketplaces whose machines are in the EU. Sovereign capacity is limited to sub-processors with an EU establishment and EU-only processing locations.
+- **Policy `sovereign`:** `withProviderOptions(['hyai' => ['policy' => 'sovereign']])` is a routing preference. EU only is what enforces, so don't rely on the policy alone for data that must stay in the EU.
 - **`Model::$sovereigntySafe`:** `HostYourAI::models()` exposes the API's `sovereignty_safe` value, or `null` when it isn't sent. HostYourAI doesn't document this field publicly, so treat it as a hint when choosing a model. It enforces nothing: EU only does.
 - **Retention:** how long HostYourAI keeps data is set by its own terms, not by this package. See [Logging & retention](https://hostyourai.com/security#4-logging-retention).
 

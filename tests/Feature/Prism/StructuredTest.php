@@ -109,3 +109,12 @@ it('refuses provider options it would otherwise ignore, naming them', function (
     'unknown schema option' => [['schema' => ['name' => 'x']], '"schema.name"'],
     'not a boolean' => [['schema' => ['strict' => 'no']], 'must be true or false'],
 ]);
+
+it('sends the hyai options in the body', function (): void {
+    Http::fake([STRUCTURED_URL => Http::response(completion(['content' => '{"ok": true}']))]);
+
+    structuredRequest()->withProviderOptions(['hyai' => ['task' => 'extract', 'policy' => 'quality'], 'schema' => ['strict' => false]])->asStructured();
+
+    Http::assertSent(fn (Request $request): bool => $request['hyai'] === ['task' => 'extract', 'policy' => 'quality']
+        && $request['response_format']['json_schema']['strict'] === false);
+});

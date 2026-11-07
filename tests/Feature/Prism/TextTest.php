@@ -278,3 +278,69 @@ it('identifies the package on every request', function (): void {
 
     Http::assertSent(fn (Request $request): bool => str_starts_with($request->header('User-Agent')[0] ?? '', 'c-point-labs/laravel-hostyourai/'));
 });
+
+it('sends the hyai options in the body', function (): void {
+    Http::fake([CHAT_URL => Http::response(completion(['content' => 'Hello']))]);
+
+    Prism::text()->using('hostyourai', 'test/model')
+        ->withProviderOptions(['hyai' => ['task' => 'summarize', 'policy' => 'sovereign']])
+        ->withPrompt('Hi')
+        ->asText();
+
+    Http::assertSent(fn (Request $request): bool => $request['hyai'] === ['task' => 'summarize', 'policy' => 'sovereign']);
+});
+
+it('sends only the hyai option that is set', function (): void {
+    Http::fake([CHAT_URL => Http::response(completion(['content' => 'Hello']))]);
+
+    Prism::text()->using('hostyourai', 'test/model')->withProviderOptions(['hyai' => ['policy' => 'cost']])->withPrompt('Hi')->asText();
+
+    Http::assertSent(fn (Request $request): bool => $request['hyai'] === ['policy' => 'cost']);
+});
+
+it('leaves the hyai object out without options', function (): void {
+    Http::fake([CHAT_URL => Http::response(completion(['content' => 'Hello']))]);
+
+    Prism::text()->using('hostyourai', 'test/model')->withPrompt('Hi')->asText();
+
+    Http::assertSent(fn (Request $request): bool => ! array_key_exists('hyai', $request->data()));
+});
+
+it('keeps the hyai options on the step after a tool call', function (): void {
+    Http::fake([CHAT_URL => Http::sequence()
+        ->push(completion(['tool_calls' => [['id' => 'call_1', 'type' => 'function', 'function' => ['name' => 'weather', 'arguments' => '{}']]]], 'tool_calls'))
+        ->push(completion(['content' => 'Done']))]);
+
+    $tool = Tool::as('weather')->for('Weather')->using(fn (): string => 'Sunny');
+
+    Prism::text()->using('hostyourai', 'test/model')
+        ->withTools([$tool])
+        ->withMaxSteps(2)
+        ->withProviderOptions(['hyai' => ['policy' => 'cost']])
+        ->withPrompt('Hi')
+        ->asText();
+
+    Http::assertSentCount(2);
+    Http::assertSent(fn (Request $request): bool => $request['hyai'] === ['policy' => 'cost'] && count($request['messages']) > 1);
+});
+
+it('refuses hyai values the API does not list', function (array $options, string $message): void {
+    Http::fake();
+
+    expect(fn () => Prism::text()->using('hostyourai', 'test/model')->withProviderOptions($options)->withPrompt('Hi')->asText())
+        ->toThrow(InvalidRequestException::class, $message);
+
+    Http::assertNothingSent();
+})->with([
+    'unknown task' => [['hyai' => ['task' => 'poetry']], '"hyai.task" must be one of chat, code'],
+    'unknown policy' => [['hyai' => ['policy' => 'fast']], '"hyai.policy" must be one of balanced, speed'],
+    'not a string' => [['hyai' => ['policy' => true]], '"hyai.policy" must be one of'],
+    'unknown hyai option' => [['hyai' => ['region' => 'EU']], '"hyai.region"'],
+    'hyai is not an object' => [['hyai' => 'cost'], '"hyai"'],
+    'empty hyai' => [['hyai' => []], '"hyai"'],
+]);
+
+it('does not repeat a refused value in the message', function (): void {
+    expect(fn () => Prism::text()->using('hostyourai', 'test/model')->withProviderOptions(['hyai' => ['task' => 'secret-value']])->withPrompt('Hi')->asText())
+        ->toThrow(fn (InvalidRequestException $e) => expect($e->getMessage())->not->toContain('secret-value'));
+});

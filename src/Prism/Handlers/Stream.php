@@ -12,6 +12,7 @@ use CPointLabs\HostYourAI\Prism\Maps\MessageMap;
 use CPointLabs\HostYourAI\Prism\Maps\ToolChoiceMap;
 use CPointLabs\HostYourAI\Prism\Maps\ToolMap;
 use CPointLabs\HostYourAI\Support\Payload;
+use CPointLabs\HostYourAI\Support\ProviderOptions;
 use Generator;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Http\Client\Response;
@@ -395,6 +396,7 @@ final class Stream
                 'stream_options' => ['include_usage' => true],
                 'model' => $request->model(),
                 'messages' => MessageMap::map($request->messages(), $request->systemPrompts()),
+                ...ProviderOptions::body($request->providerOptions()),
                 ...Arr::whereNotNull([
                     'max_tokens' => $request->maxTokens(),
                     'temperature' => $request->temperature(),

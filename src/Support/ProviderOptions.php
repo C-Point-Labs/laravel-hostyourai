@@ -7,30 +7,58 @@ namespace CPointLabs\HostYourAI\Support;
 use CPointLabs\HostYourAI\Exceptions\InvalidRequestException;
 
 /**
- * Refuses provider options that would otherwise have no effect. HostYourAI
- * documents no extra chat request fields, so nothing here is passed through.
+ * Checks provider options against what each kind of request supports, so that
+ * none of them is ever ignored without a word.
  *
  * @internal
  */
 final class ProviderOptions
 {
+    public const TEXT = ['hyai.task', 'hyai.policy'];
+
+    public const STRUCTURED = ['schema.strict', 'hyai.task', 'hyai.policy'];
+
+    public const STREAM = ['reasoning', 'hyai.task', 'hyai.policy'];
+
+    private const VALUES = [
+        'reasoning' => [true, false],
+        'schema.strict' => [true, false],
+        'hyai.task' => ['chat', 'code', 'summarize', 'classify', 'extract', 'rag', 'legal', 'reason'],
+        'hyai.policy' => ['balanced', 'speed', 'cost', 'quality', 'sovereign'],
+    ];
+
     /**
      * @param mixed $options What the request holds
-     * @param list<string> $allowed Dotted paths that this kind of request supports, all of them booleans
+     * @param list<string> $allowed Dotted paths that this kind of request supports
      */
     public static function assertSupported(mixed $options, array $allowed): void
     {
         foreach (self::flatten(is_array($options) ? $options : []) as $path => $value) {
             if (! in_array($path, $allowed, true)) {
-                $supported = $allowed === [] ? 'This kind of request supports none.' : 'Supported here: '.implode(', ', $allowed).'.';
-
-                throw new InvalidRequestException("The provider option \"{$path}\" is not supported. {$supported}");
+                throw new InvalidRequestException("The provider option \"{$path}\" is not supported. Supported here: ".implode(', ', $allowed).'.');
             }
 
-            if (! is_bool($value)) {
-                throw new InvalidRequestException("The provider option \"{$path}\" must be true or false.");
+            $values = self::VALUES[$path] ?? [];
+
+            if (! in_array($value, $values, true)) {
+                $expected = is_bool($values[0] ?? null) ? 'true or false' : 'one of '.implode(', ', array_filter($values, is_string(...)));
+
+                throw new InvalidRequestException("The provider option \"{$path}\" must be {$expected}.");
             }
         }
+    }
+
+    /**
+     * The part of the request body that comes from the options.
+     *
+     * @param mixed $options What the request holds, already checked
+     * @return array<string, mixed>
+     */
+    public static function body(mixed $options): array
+    {
+        $hyai = is_array($options) ? ($options['hyai'] ?? null) : null;
+
+        return is_array($hyai) && $hyai !== [] ? ['hyai' => $hyai] : [];
     }
 
     /**

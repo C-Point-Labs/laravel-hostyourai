@@ -31,7 +31,7 @@ class HostYourAIProvider extends Provider
     #[Override]
     public function text(TextRequest $request): TextResponse
     {
-        ProviderOptions::assertSupported($request->providerOptions(), []);
+        ProviderOptions::assertSupported($request->providerOptions(), ProviderOptions::TEXT);
 
         try {
             return (new Text($this->client($request->clientOptions(), $request->clientRetry())))->handle($request);
@@ -43,7 +43,7 @@ class HostYourAIProvider extends Provider
     #[Override]
     public function structured(StructuredRequest $request): StructuredResponse
     {
-        ProviderOptions::assertSupported($request->providerOptions(), ['schema.strict']);
+        ProviderOptions::assertSupported($request->providerOptions(), ProviderOptions::STRUCTURED);
 
         try {
             return (new Structured($this->client($request->clientOptions(), $request->clientRetry())))->handle($request);
@@ -55,7 +55,7 @@ class HostYourAIProvider extends Provider
     #[Override]
     public function stream(TextRequest $request): Generator
     {
-        ProviderOptions::assertSupported($request->providerOptions(), ['reasoning']);
+        ProviderOptions::assertSupported($request->providerOptions(), ProviderOptions::STREAM);
 
         try {
             yield from (new Stream(
