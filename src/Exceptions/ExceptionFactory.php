@@ -23,10 +23,15 @@ final class ExceptionFactory
      */
     private const STATUS_BY_CODE = [
         'team_budget_exceeded' => 402,
+        'team_model_budget_exceeded' => 402,
         'model_not_allowed' => 403,
         'personal_key_required' => 403,
+        'sovereignty_violation' => 403,
+        'rate_limit_exceeded' => 429,
         'model_unavailable' => 503,
         'sovereignty_unavailable' => 503,
+        'team_router_unavailable' => 503,
+        'loop_detected' => 508,
     ];
 
     public static function fromRequestException(RequestException $e): HostYourAIException
@@ -62,6 +67,7 @@ final class ExceptionFactory
             $status === 402 => BudgetExceededException::class,
             $status === 403 && $code === 'model_not_allowed' => ModelNotAllowedException::class,
             $status === 403 && $code === 'personal_key_required' => PersonalKeyRequiredException::class,
+            $status === 403 && $code === 'sovereignty_violation' => SovereigntyViolationException::class,
             in_array($status, [400, 404, 413, 422], true) => InvalidRequestException::class,
             $status === 429 => RateLimitedException::class,
             $status === 503 => ModelUnavailableException::class,

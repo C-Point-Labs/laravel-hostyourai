@@ -291,14 +291,17 @@ Every API error is a typed exception that extends `HostYourAIException`, which e
 | `BudgetExceededException` | 402: credit or team budget used up |
 | `ModelNotAllowedException` | 403: this key may not use the model |
 | `PersonalKeyRequiredException` | 403: the endpoint needs a personal key |
+| `SovereigntyViolationException` | 403: EU only is on and the machine that got this request is not sovereign |
 | `InvalidRequestException` | 400, 404, 413, 422 |
 | `RateLimitedException` | 429 |
-| `ModelUnavailableException` | 503: the model can't serve this request right now |
+| `ModelUnavailableException` | 503: this request can't be served right now, for example because the model or EU capacity is unavailable |
 | `ServerException` | Other 5xx |
 | `ConnectionException` | Network failure, timeout, or a stream that ended early |
 | `ConfigurationException` | No API key configured |
 | `UnexpectedResponseException` | A response the package can't read |
 | `StructuredOutputException` | Invalid or incomplete structured output |
+
+An error this package doesn't recognize stays a plain `HostYourAIException`, with the API's `status` and `errorCode`.
 
 They all extend Prism's `PrismException`, but not its more specific types: catch `RateLimitedException` here, not `PrismRateLimitedException`.
 

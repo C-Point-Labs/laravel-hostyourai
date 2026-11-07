@@ -9,6 +9,7 @@ use CPointLabs\HostYourAI\Exceptions\InvalidRequestException;
 use CPointLabs\HostYourAI\Exceptions\ModelNotAllowedException;
 use CPointLabs\HostYourAI\Exceptions\ModelUnavailableException;
 use CPointLabs\HostYourAI\Exceptions\RateLimitedException;
+use CPointLabs\HostYourAI\Exceptions\SovereigntyViolationException;
 use CPointLabs\HostYourAI\Exceptions\UnexpectedResponseException;
 use Illuminate\Http\Client\ConnectionException as HttpConnectionException;
 use Illuminate\Http\Client\Request;
@@ -149,6 +150,7 @@ it('maps API errors to typed exceptions', function (int $status, array $body, ar
 })->with([
     '402' => [402, ['error' => ['message' => 'Budget', 'code' => 'team_budget_exceeded']], [], BudgetExceededException::class],
     '403' => [403, ['error' => ['message' => 'No', 'code' => 'model_not_allowed']], [], ModelNotAllowedException::class],
+    '403 sovereignty' => [403, ['error' => ['message' => 'Not sovereign', 'code' => 'sovereignty_violation']], [], SovereigntyViolationException::class],
     '503' => [503, ['error' => ['message' => 'Busy', 'code' => 'model_unavailable']], ['Retry-After' => '9'], ModelUnavailableException::class],
 ])->throws(CPointLabs\HostYourAI\Exceptions\HostYourAIException::class);
 
