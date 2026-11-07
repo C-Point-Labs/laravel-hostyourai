@@ -49,7 +49,7 @@ if ($decision->noul('refund')->isYes(0.8)) {
 | --- | --- |
 | **Chat** | A Prism provider with text, streaming, tool calling and structured output |
 | **Decisions** | A fluent client with readonly DTOs for Choice, Noul and Score questions |
-| **Errors** | Typed exceptions for every API error, with `Retry-After` support |
+| **Errors** | Typed exceptions for API errors, with `Retry-After` support |
 | **Privacy** | No logging, and reasoning text stays away from your users by default |
 | **Testing** | A fake for decisions, next to Prism's own |
 
