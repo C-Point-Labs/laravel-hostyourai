@@ -265,3 +265,11 @@ it('keeps state and key out of logs, exceptions and dumps', function (): void {
     Log::shouldNotHaveReceived('debug');
     Log::shouldNotHaveReceived('error');
 });
+
+it('identifies the package on a decision', function (): void {
+    Http::fake([DECISION_URL => Http::response(decisionResponse(['q' => ['type' => 'noul', 'noul' => 1]]))]);
+
+    HostYourAI::decision()->state('x')->ask('q', Noul::make('y'))->send();
+
+    Http::assertSent(fn (Request $request): bool => str_starts_with($request->header('User-Agent')[0] ?? '', 'c-point-labs/laravel-hostyourai/'));
+});

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace CPointLabs\HostYourAI\Http;
 
+use Composer\InstalledVersions;
 use CPointLabs\HostYourAI\Exceptions\ConfigurationException;
 use CPointLabs\HostYourAI\Exceptions\ExceptionFactory;
 use CPointLabs\HostYourAI\Support\Payload;
@@ -21,6 +22,8 @@ use Throwable;
  */
 final class ClientFactory
 {
+    private const PACKAGE = 'c-point-labs/laravel-hostyourai';
+
     public readonly string $baseUrl;
 
     public readonly string $decisionUrl;
@@ -72,6 +75,7 @@ final class ClientFactory
 
         $client = Http::baseUrl($baseUrl)
             ->withToken($this->apiKey)
+            ->withUserAgent(self::userAgent())
             ->acceptJson()
             ->timeout($this->timeout)
             ->connectTimeout($this->connectTimeout)
@@ -102,6 +106,13 @@ final class ClientFactory
         }
 
         return ExceptionFactory::parseRetryAfter($e->response->header('Retry-After')) ?? 1;
+    }
+
+    private static function userAgent(): string
+    {
+        $version = InstalledVersions::isInstalled(self::PACKAGE) ? InstalledVersions::getPrettyVersion(self::PACKAGE) : null;
+
+        return self::PACKAGE.'/'.ltrim($version ?? 'unknown', 'v');
     }
 
     private static function deriveDecisionUrl(string $baseUrl): string

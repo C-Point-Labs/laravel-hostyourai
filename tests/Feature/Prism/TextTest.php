@@ -251,3 +251,30 @@ it('refuses a document instead of dropping it', function (): void {
 
     Http::assertNothingSent();
 });
+
+it('refuses provider options it would otherwise ignore, naming them', function (array $options, string $message): void {
+    Http::fake();
+
+    expect(fn () => Prism::text()->using('hostyourai', 'test/model')->withProviderOptions($options)->withPrompt('Hi')->asText())
+        ->toThrow(InvalidRequestException::class, $message);
+
+    Http::assertNothingSent();
+})->with([
+    'undocumented field' => [['knowledge_base_id' => 12], '"knowledge_base_id"'],
+    'stream only' => [['reasoning' => true], '"reasoning"'],
+    'structured only' => [['schema' => ['strict' => false]], '"schema.strict"'],
+]);
+
+it('sends a text request without provider options', function (): void {
+    Http::fake([CHAT_URL => Http::response(completion(['content' => 'Hello']))]);
+
+    expect(Prism::text()->using('hostyourai', 'test/model')->withPrompt('Hi')->asText()->text)->toBe('Hello');
+});
+
+it('identifies the package on every request', function (): void {
+    Http::fake([CHAT_URL => Http::response(completion(['content' => 'Hello']))]);
+
+    Prism::text()->using('hostyourai', 'test/model')->withPrompt('Hi')->asText();
+
+    Http::assertSent(fn (Request $request): bool => str_starts_with($request->header('User-Agent')[0] ?? '', 'c-point-labs/laravel-hostyourai/'));
+});

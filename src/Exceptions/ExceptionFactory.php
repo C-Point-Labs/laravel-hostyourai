@@ -70,6 +70,8 @@ final class ExceptionFactory
             $status === 403 && $code === 'sovereignty_violation' => SovereigntyViolationException::class,
             in_array($status, [400, 404, 413, 422], true) => InvalidRequestException::class,
             $status === 429 => RateLimitedException::class,
+            $status === 503 && $code === 'sovereignty_unavailable' => SovereigntyUnavailableException::class,
+            $status === 503 && $code === 'team_router_unavailable' => RouterUnavailableException::class,
             $status === 503 => ModelUnavailableException::class,
             $status >= 500 => ServerException::class,
             default => HostYourAIException::class,

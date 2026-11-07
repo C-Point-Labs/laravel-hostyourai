@@ -9,6 +9,7 @@ use CPointLabs\HostYourAI\Http\ClientFactory;
 use CPointLabs\HostYourAI\Prism\Handlers\Stream;
 use CPointLabs\HostYourAI\Prism\Handlers\Structured;
 use CPointLabs\HostYourAI\Prism\Handlers\Text;
+use CPointLabs\HostYourAI\Support\ProviderOptions;
 use Generator;
 use Illuminate\Http\Client\ConnectionException as HttpConnectionException;
 use Illuminate\Http\Client\PendingRequest;
@@ -30,6 +31,8 @@ class HostYourAIProvider extends Provider
     #[Override]
     public function text(TextRequest $request): TextResponse
     {
+        ProviderOptions::assertSupported($request->providerOptions(), []);
+
         try {
             return (new Text($this->client($request->clientOptions(), $request->clientRetry())))->handle($request);
         } catch (HttpConnectionException $e) {
@@ -40,6 +43,8 @@ class HostYourAIProvider extends Provider
     #[Override]
     public function structured(StructuredRequest $request): StructuredResponse
     {
+        ProviderOptions::assertSupported($request->providerOptions(), ['schema.strict']);
+
         try {
             return (new Structured($this->client($request->clientOptions(), $request->clientRetry())))->handle($request);
         } catch (HttpConnectionException $e) {
@@ -50,6 +55,8 @@ class HostYourAIProvider extends Provider
     #[Override]
     public function stream(TextRequest $request): Generator
     {
+        ProviderOptions::assertSupported($request->providerOptions(), ['reasoning']);
+
         try {
             yield from (new Stream(
                 $this->client($request->clientOptions(), $request->clientRetry()),

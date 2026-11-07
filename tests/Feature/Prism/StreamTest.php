@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use CPointLabs\HostYourAI\Exceptions\BudgetExceededException;
 use CPointLabs\HostYourAI\Exceptions\ConnectionException;
+use CPointLabs\HostYourAI\Exceptions\InvalidRequestException;
 use CPointLabs\HostYourAI\Exceptions\ModelUnavailableException;
 use CPointLabs\HostYourAI\Prism\VisibleText;
 use Illuminate\Broadcasting\Channel;
@@ -186,4 +187,25 @@ it('broadcasts the answer without reasoning', function (): void {
 
     Event::assertDispatched(TextDeltaBroadcast::class);
     Event::assertNotDispatched(ThinkingBroadcast::class);
+});
+
+it('refuses provider options it would otherwise ignore, naming them', function (array $options, string $message): void {
+    Http::fake();
+
+    expect(fn () => iterator_to_array(hostyouraiStream()->withProviderOptions($options)->asStream(), false))
+        ->toThrow(InvalidRequestException::class, $message);
+
+    Http::assertNothingSent();
+})->with([
+    'undocumented field' => [['knowledge_base_id' => 12], '"knowledge_base_id"'],
+    'structured only' => [['schema' => ['strict' => false]], '"schema.strict"'],
+    'not a boolean' => [['reasoning' => 'yes'], 'must be true or false'],
+]);
+
+it('identifies the package on a stream', function (): void {
+    fakeStream([chunk(['content' => 'Hi'], 'stop')]);
+
+    iterator_to_array(hostyouraiStream()->asStream(), false);
+
+    Http::assertSent(fn (Request $request): bool => str_starts_with($request->header('User-Agent')[0] ?? '', 'c-point-labs/laravel-hostyourai/'));
 });

@@ -1,6 +1,6 @@
 {
     "name": "c-point-labs/laravel-hostyourai",
-    "description": "HostYourAI for Laravel: a Prism provider for chat and a typed client for the decision API.",
+    "description": "HostYourAI for Laravel: a Prism provider for chat and a typed client for the decision API. Not affiliated with HostYourAI B.V.",
     "type": "library",
     "license": "MIT",
     "keywords": [
@@ -23,6 +23,7 @@
     ],
     "require": {
         "php": "^8.2",
+        "composer-runtime-api": "^2.2",
         "illuminate/http": "^12.61.1|^13.12.0",
         "illuminate/support": "^12.61.1|^13.12.0",
         "prism-php/prism": "^0.102"

@@ -50,14 +50,14 @@ if ($decision->noul('refund')->isYes(0.8)) {
 | **Chat** | A Prism provider with text, streaming, tool calling and structured output |
 | **Decisions** | A fluent client with readonly DTOs for Choice, Noul and Score questions |
 | **Errors** | Typed exceptions for API errors, with `Retry-After` support |
-| **Privacy** | No logging, and reasoning text stays away from your users by default |
+| **Privacy** | This package logs nothing, and reasoning text stays away from your users by default |
 | **Testing** | A fake for decisions, next to Prism's own |
 
 This is an independent open source package. It is not affiliated with HostYourAI B.V.
 
 ## Install
 
-Requires PHP 8.2+ and Laravel 12.61+ or 13.12+.
+Requires PHP 8.2+ and Laravel 12.61+ or 13.12+. You also need a HostYourAI account and key: [register](https://hostyourai.com/app/register), then create one under [API keys](https://hostyourai.com/app/api-keys).
 
 ```bash
 composer require c-point-labs/laravel-hostyourai
@@ -160,6 +160,10 @@ Prism::text()
 
 Reasoning can use up your `max_tokens`. You then get empty text and `FinishReason::Length`, so allow for this when you set a low limit.
 
+### Provider options
+
+`withProviderOptions()` takes `reasoning` for streams and `schema.strict` for structured output. HostYourAI documents no other chat request fields, so anything else raises an `InvalidRequestException` that names the option, instead of being ignored.
+
 ### Tool calling
 
 ```php
@@ -207,7 +211,7 @@ $response->structured['in_europe'];
 
 ## Decisions
 
-The decision API returns typed judgments instead of text: your code gets a choice, a probability or a score.
+The decision API returns typed judgments instead of text: your code gets a choice, a probability or a score. HostYourAI labels the decision API and Loes Beslis as [beta](https://hostyourai.com/en/jev), so they may still change.
 
 ```php
 use CPointLabs\HostYourAI\Decisions\Questions\Choice;
@@ -294,14 +298,16 @@ Every API error is a typed exception that extends `HostYourAIException`, which e
 | `SovereigntyViolationException` | 403: EU only is on and the machine that got this request is not sovereign |
 | `InvalidRequestException` | 400, 404, 413, 422 |
 | `RateLimitedException` | 429 |
-| `ModelUnavailableException` | 503: this request can't be served right now, for example because the model or EU capacity is unavailable |
+| `ModelUnavailableException` | 503: the model can't serve this request right now |
+| `SovereigntyUnavailableException` | 503: EU only is on and the model has no sovereign capacity right now |
+| `RouterUnavailableException` | 503: the team's router could not be read, so the request was refused rather than served without its guards |
 | `ServerException` | Other 5xx |
 | `ConnectionException` | Network failure, timeout, or a stream that ended early |
 | `ConfigurationException` | No API key configured |
 | `UnexpectedResponseException` | A response the package can't read |
 | `StructuredOutputException` | Invalid or incomplete structured output |
 
-An error this package doesn't recognize stays a plain `HostYourAIException`, with the API's `status` and `errorCode`.
+An error this package doesn't recognize stays a plain `HostYourAIException`, with the API's `status` and `errorCode`. `SovereigntyUnavailableException` and `RouterUnavailableException` extend `ModelUnavailableException`, so existing catch blocks keep working.
 
 They all extend Prism's `PrismException`, but not its more specific types: catch `RateLimitedException` here, not `PrismRateLimitedException`.
 
@@ -321,6 +327,32 @@ try {
 ```
 
 Retries are off by default. With `retry.times` set, 429 and 503 responses are retried after `Retry-After` (or 1 second if absent), unless that wait is longer than `retry.max_wait`.
+
+## EU only and data handling
+
+This package doesn't decide where a request runs. HostYourAI does, based on your key and team.
+
+- **Turning it on:** EU only, also called Sovereignty Mode, is a [switch per API key](https://hostyourai.com/faq) in your HostYourAI account. For a team, set the `eu_only` guard on its router through the [Management API](https://hostyourai.com/docs/management-api). The [security page](https://hostyourai.com/security#3-where-your-data-is-processed) also describes conditions for activating it per account, so check with HostYourAI if you depend on it.
+- **EU-hosted and sovereign:** EU-hosted says where the machine is. HostYourAI's [security page](https://hostyourai.com/security#3-where-your-data-is-processed) names US-incorporated GPU marketplaces whose machines are in the EU. Sovereign capacity is limited to sub-processors with an EU establishment and EU-only processing locations.
+- **`Model::$sovereigntySafe`:** `HostYourAI::models()` exposes the API's `sovereignty_safe` value, or `null` when it isn't sent. HostYourAI doesn't document this field publicly, so treat it as a hint when choosing a model. It enforces nothing: EU only does.
+- **Retention:** how long HostYourAI keeps data is set by its own terms, not by this package. See [Logging & retention](https://hostyourai.com/security#4-logging-retention).
+
+When EU only or a team's router refuses a request, don't fall back to a provider outside the EU. That would send the data exactly where the setting says it may not go:
+
+```php
+use CPointLabs\HostYourAI\Exceptions\ModelUnavailableException;
+use CPointLabs\HostYourAI\Exceptions\RouterUnavailableException;
+use CPointLabs\HostYourAI\Exceptions\SovereigntyUnavailableException;
+use CPointLabs\HostYourAI\Exceptions\SovereigntyViolationException;
+
+try {
+    $answer = Prism::text()->using('hostyourai', 'hyai/auto')->withPrompt($prompt)->asText()->text;
+} catch (SovereigntyUnavailableException | SovereigntyViolationException | RouterUnavailableException $e) {
+    // Show a message or try again later. No fallback outside the EU.
+} catch (ModelUnavailableException $e) {
+    // The model is busy or cold: retry at $e->retryAt() or pick another model.
+}
+```
 
 ## Privacy
 
@@ -367,6 +399,11 @@ HOSTYOURAI_LIVE_TESTS=true HOSTYOURAI_API_KEY=your-key vendor/bin/pest tests/Liv
 ```
 
 `HOSTYOURAI_LIVE_TESTS` and `HOSTYOURAI_API_KEY` must be in the actual process environment. Some local PHP setups, like Lerd, don't pass environment variables through to PHP, and the live tests are then skipped.
+
+## Getting help
+
+- Problems with this package: [GitHub Issues](https://github.com/C-Point-Labs/laravel-hostyourai/issues).
+- Problems with the API or your account: [HostYourAI support](https://hostyourai.com/contact).
 
 ## License
 

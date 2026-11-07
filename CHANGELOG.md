@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-07
+
+### Added
+
+- `SovereigntyUnavailableException` for a 503 `sovereignty_unavailable` and `RouterUnavailableException` for a 503 `team_router_unavailable`. Both extend `ModelUnavailableException`, so existing catch blocks keep working.
+- A `c-point-labs/laravel-hostyourai/{version}` User-Agent on all requests.
+- README sections on EU only and data handling and on where to get help, the beta label of the decision API, and links to registration and API keys.
+
+### Changed
+
+- **Breaking:** provider options that have no effect now raise an `InvalidRequestException` that names them, instead of being ignored. This includes `reasoning` outside a stream, `schema.strict` outside structured output, and values that aren't true or false.
+- The README's privacy row says "This package logs nothing", so it can't be read as a claim about HostYourAI.
+- The Composer description and social preview say "Not affiliated with HostYourAI B.V."
+
 ## [0.2.1] - 2026-11-07
 
 ### Added
@@ -60,7 +74,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Typed exceptions with `Retry-After` support.
 - A test fake for decisions, balance and models.
 
-[Unreleased]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.2.1...HEAD
+[Unreleased]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.2.1...v0.3.0
 [0.2.1]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.2.0...v0.2.1
 [0.2.0]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/C-Point-Labs/laravel-hostyourai/compare/v0.1.0...v0.1.1

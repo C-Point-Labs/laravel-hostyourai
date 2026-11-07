@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use CPointLabs\HostYourAI\Exceptions\InvalidRequestException;
 use CPointLabs\HostYourAI\Exceptions\ModelUnavailableException;
 use CPointLabs\HostYourAI\Exceptions\StructuredOutputException;
 use Illuminate\Http\Client\Request;
@@ -94,3 +95,17 @@ it('maps API errors to typed exceptions', function (): void {
 
     structuredRequest()->asStructured();
 })->throws(ModelUnavailableException::class);
+
+it('refuses provider options it would otherwise ignore, naming them', function (array $options, string $message): void {
+    Http::fake();
+
+    expect(fn () => structuredRequest()->withProviderOptions($options)->asStructured())
+        ->toThrow(InvalidRequestException::class, $message);
+
+    Http::assertNothingSent();
+})->with([
+    'undocumented field' => [['knowledge_base_id' => 12], '"knowledge_base_id"'],
+    'stream only' => [['reasoning' => true], '"reasoning"'],
+    'unknown schema option' => [['schema' => ['name' => 'x']], '"schema.name"'],
+    'not a boolean' => [['schema' => ['strict' => 'no']], 'must be true or false'],
+]);
